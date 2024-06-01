@@ -11,6 +11,15 @@ const redisClient = redis.createClient({
     port: process.env.REDIS_PORT,
 });
 
+redisClient.on('connect', () => {
+    console.log('Connected to Redis');
+});
+
+redisClient.on('error', (err) => {
+    console.error('Redis connection error:', err);
+});
+
+
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -21,9 +30,16 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to register a new Kryptonian
-export const register = async (req, res) => {
+    export const register = async (req, res) => {
     const { email, password } = req.body;
     try {
+        // Check if email already exists
+        const existingKryptonian = await Kryptonian.findOne({ email });
+        if (existingKryptonian) {
+            return res.status(409).send('Email already in use');
+        }
+
+        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
         const newKryptonian = new Kryptonian({ email, password: hashedPassword });
         await newKryptonian.save();
