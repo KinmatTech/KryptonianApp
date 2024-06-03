@@ -3,22 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { jwtSecret, emailUser, emailPass } from '../config.js';
 import nodemailer from 'nodemailer';
-import redis from 'redis';
-
-// Initialize Redis client
-const redisClient = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-});
-
-redisClient.on('connect', () => {
-    console.log('Connected to Redis');
-});
-
-redisClient.on('error', (err) => {
-    console.error('Redis connection error:', err);
-});
-
+import redisClient from '../checkRedis.js';  // Import the Redis client
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
@@ -30,7 +15,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to register a new Kryptonian
-    export const register = async (req, res) => {
+export const register = async (req, res) => {
     const { email, password } = req.body;
     try {
         // Check if email already exists
@@ -49,7 +34,7 @@ const transporter = nodemailer.createTransport({
         const confirmationUrl = `http://localhost:3000/confirm-email?token=${emailToken}`;
 
         // Store token in Redis
-        redisClient.set(email, emailToken, 'EX', 3600);
+        await redisClient.set(email, emailToken, 'EX', 3600);
 
         // Send confirmation email
         const mailOptions = {
